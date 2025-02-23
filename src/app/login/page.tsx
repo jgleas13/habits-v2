@@ -30,7 +30,7 @@ export default function LoginPage() {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: process.env.NEXT_PUBLIC_SITE_URL || `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/auth/callback`
         }
       });
 
