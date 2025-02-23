@@ -6,11 +6,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-const SITE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://habits-v2-peach.vercel.app'
-  : 'http://localhost:3000';
+const SITE_URL = 'https://habits-v2-peach.vercel.app';
 
-console.log('Current environment:', process.env.NODE_ENV);
 console.log('Using site URL:', SITE_URL);
 
 export default function LoginPage() {

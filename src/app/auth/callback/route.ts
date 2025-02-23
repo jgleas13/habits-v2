@@ -2,9 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-const SITE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://habits-v2-peach.vercel.app'
-  : 'http://localhost:3000';
+const SITE_URL = 'https://habits-v2-peach.vercel.app';
 
 console.log('Callback handling with site URL:', SITE_URL);
 
