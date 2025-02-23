@@ -2,13 +2,15 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 export default function LoginPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -17,12 +19,30 @@ export default function LoginPage() {
   }, [user, router]);
 
   const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+        }
+      });
+
+      if (error) {
+        throw error;
       }
-    });
+    } catch (err) {
+      console.error('Error signing in with Google:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,18 +54,33 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+          {error && (
+            <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+              {error}
+            </div>
+          )}
+          
           <button
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+            disabled={isLoading}
+            className={`w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            <Image
-              src="/google.svg"
-              alt="Google logo"
-              width={24}
-              height={24}
-              priority
-            />
-            <span className="text-base font-medium">Continue with Google</span>
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+            ) : (
+              <Image
+                src="/google.svg"
+                alt="Google logo"
+                width={24}
+                height={24}
+                priority
+              />
+            )}
+            <span className="text-base font-medium">
+              {isLoading ? 'Signing in...' : 'Continue with Google'}
+            </span>
           </button>
 
           <div className="mt-6 text-center">
