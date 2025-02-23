@@ -6,10 +6,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-const SITE_URL = 'https://habits-v2-peach.vercel.app';
-
-console.log('Using site URL:', SITE_URL);
-
 export default function LoginPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -27,7 +23,8 @@ export default function LoginPage() {
       setIsLoading(true);
       setError(null);
       
-      console.log('Starting Google sign-in with redirect to:', `${SITE_URL}/auth/callback`);
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('Starting Google sign-in with redirect to:', redirectUrl);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -36,7 +33,7 @@ export default function LoginPage() {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: `${SITE_URL}/auth/callback`
+          redirectTo: redirectUrl
         }
       });
 

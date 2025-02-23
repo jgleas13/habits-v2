@@ -2,15 +2,11 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-const SITE_URL = 'https://habits-v2-peach.vercel.app';
-
-console.log('Callback handling with site URL:', SITE_URL);
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
 
-  console.log('Received callback with code:', code ? 'present' : 'missing');
+  console.log('Callback received from URL:', requestUrl.toString());
 
   if (code) {
     const cookieStore = cookies();
@@ -19,6 +15,10 @@ export async function GET(request: Request) {
     console.log('Successfully exchanged code for session');
   }
 
-  console.log('Redirecting to:', `${SITE_URL}/`);
-  return NextResponse.redirect(`${SITE_URL}/`);
+  // Get the origin of the request
+  const origin = requestUrl.origin;
+  console.log('Request origin:', origin);
+
+  // Always redirect to the root path of wherever the request came from
+  return NextResponse.redirect(`${origin}/`);
 } 
