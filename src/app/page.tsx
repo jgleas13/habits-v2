@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
 
 interface Habit {
   id: number;
   name: string;
   done: boolean;
   created_at?: string;
+  user_id: string;
 }
 
 export default function Home() {
@@ -15,17 +18,26 @@ export default function Home() {
   const [newHabit, setNewHabit] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     fetchHabits();
-  }, []);
+  }, [user, router]);
 
   const fetchHabits = async () => {
+    if (!user) return;
+
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('habits')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -45,12 +57,16 @@ export default function Home() {
 
   const handleAddHabit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHabit.trim()) return;
+    if (!newHabit.trim() || !user) return;
 
     try {
       const { data, error } = await supabase
         .from('habits')
-        .insert([{ name: newHabit.trim(), done: false }])
+        .insert([{ 
+          name: newHabit.trim(), 
+          done: false,
+          user_id: user.id
+        }])
         .select()
         .single();
 
@@ -74,6 +90,7 @@ export default function Home() {
         .from('habits')
         .update({ done: !habit.done })
         .eq('id', habit.id)
+        .eq('user_id', user?.id)
         .select();
 
       if (error) {
@@ -96,7 +113,15 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-8 max-w-2xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8 text-center">Habit Tracker</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Habit Tracker</h1>
+        <button
+          onClick={() => signOut()}
+          className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+        >
+          Sign Out
+        </button>
+      </div>
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
