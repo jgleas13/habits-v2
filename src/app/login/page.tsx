@@ -18,15 +18,25 @@ export default function LoginPage() {
   }, [user, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="max-w-sm w-full">
         <h1 className="text-2xl font-bold text-center mb-8">Sign in to Habit Tracker</h1>
         <div className="bg-white p-8 rounded-lg shadow-md">
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            appearance={{ 
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#3B82F6',
+                    brandAccent: '#2563EB',
+                  },
+                },
+              },
+            }}
             providers={['google']}
-            redirectTo={`${window.location.origin}/auth/callback`}
+            redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
           />
         </div>
       </div>
