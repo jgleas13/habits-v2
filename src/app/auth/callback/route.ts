@@ -12,5 +12,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(new URL('/', requestUrl.origin));
+  // Use the production URL for redirect
+  return NextResponse.redirect('https://habits-v2-peach.vercel.app/');
 } 
