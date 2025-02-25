@@ -15,6 +15,9 @@ export default function Home() {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Log authentication state
+    console.log('Authentication state:', user ? 'Authenticated as ' + user.id : 'Not authenticated');
+    
     if (user) {
       fetchHabits();
     }
@@ -45,38 +48,50 @@ export default function Home() {
     if (!newHabit.trim() || !user) return;
 
     try {
+      console.log('Adding habit:', newHabit.trim(), 'for user:', user.id);
+      
+      // Create the habit object with the exact schema expected by Supabase
+      const habitData = {
+        name: newHabit.trim(),
+        done: false,
+        user_id: user.id
+      };
+      
+      console.log('Sending habit data:', habitData);
+      
       const { data, error } = await supabase
         .from('habits')
-        .insert([{
-          name: newHabit.trim(),
-          status: 'unknown',
-          user_id: user.id
-        }])
+        .insert([habitData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error adding habit:', error);
+        throw error;
+      }
+      
+      console.log('Successfully added habit:', data);
       setHabits([data, ...habits]);
       setNewHabit('');
     } catch (error) {
       console.error('Error adding habit:', error);
+      alert('Failed to add habit. Please check the console for details.');
     }
   };
 
-  const updateHabitStatus = async (habit: Habit, newStatus: Habit['status']) => {
+  const updateHabitStatus = async (habit: Habit, done: boolean) => {
     try {
       const { error } = await supabase
         .from('habits')
         .update({
-          status: newStatus,
-          completed_at: newStatus !== 'unknown' ? new Date().toISOString() : null
+          done: done
         })
         .eq('id', habit.id)
         .eq('user_id', user?.id);
 
       if (error) throw error;
       setHabits(habits.map(h =>
-        h.id === habit.id ? { ...h, status: newStatus } : h
+        h.id === habit.id ? { ...h, done: done } : h
       ));
     } catch (error) {
       console.error('Error updating habit status:', error);

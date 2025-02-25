@@ -5,15 +5,14 @@ import { Fragment } from 'react';
 export interface Habit {
   id: number;
   name: string;
-  status: 'unknown' | 'success' | 'failed' | 'skipped';
-  completed_at: string | null;
+  done: boolean;
   user_id: string;
   created_at: string;
 }
 
 interface HabitItemProps {
   habit: Habit;
-  onStatusChange: (habit: Habit, newStatus: Habit['status']) => void;
+  onStatusChange: (habit: Habit, done: boolean) => void;
 }
 
 interface MenuItemProps {
@@ -37,30 +36,21 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const getStatusStyles = () => {
-    switch (habit.status) {
-      case 'success':
-        return 'line-through text-gray-500';
-      case 'failed':
-        return 'line-through text-red-500';
-      case 'skipped':
-        return 'line-through text-yellow-500';
-      default:
-        return 'text-gray-900';
-    }
+    return habit.done ? 'line-through text-gray-500' : 'text-gray-900';
   };
 
   return (
     <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:border-gray-200 transition-all">
       {/* Quick Done Button */}
       <button
-        onClick={() => onStatusChange(habit, habit.status === 'success' ? 'unknown' : 'success')}
+        onClick={() => onStatusChange(habit, !habit.done)}
         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-          habit.status === 'success'
+          habit.done
             ? 'bg-green-500 border-green-500'
             : 'border-gray-300 hover:border-green-500'
         }`}
       >
-        {habit.status === 'success' && (
+        {habit.done && (
           <svg
             className="w-4 h-4 text-white"
             fill="none"
@@ -82,7 +72,7 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
         {habit.name}
       </span>
 
-      {/* Status Menu */}
+      {/* Status Menu - Simplified for done/not done */}
       <Menu as="div" className="relative">
         <Menu.Button
           className="p-1 rounded-full hover:bg-gray-100"
@@ -116,22 +106,15 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
             <div className="py-1">
               <Menu.Item>
                 {({ active }) => (
-                  <MenuItem active={active} onClick={() => onStatusChange(habit, 'success')}>
-                    ✓ Check-In
+                  <MenuItem active={active} onClick={() => onStatusChange(habit, true)}>
+                    ✓ Mark as Done
                   </MenuItem>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <MenuItem active={active} onClick={() => onStatusChange(habit, 'skipped')}>
-                    → Skip
-                  </MenuItem>
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <MenuItem active={active} onClick={() => onStatusChange(habit, 'failed')}>
-                    ✕ Fail
+                  <MenuItem active={active} onClick={() => onStatusChange(habit, false)}>
+                    ✕ Mark as Not Done
                   </MenuItem>
                 )}
               </Menu.Item>

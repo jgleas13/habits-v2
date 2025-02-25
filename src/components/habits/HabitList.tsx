@@ -3,56 +3,38 @@ import { HabitItem, type Habit } from './HabitItem';
 
 interface HabitListProps {
   habits: Habit[];
-  onStatusChange: (habit: Habit, newStatus: Habit['status']) => void;
-}
-
-interface HabitGroups {
-  unknown: Habit[];
-  success: Habit[];
-  failed: Habit[];
-  skipped: Habit[];
+  onStatusChange: (habit: Habit, done: boolean) => void;
 }
 
 export function HabitList({ habits, onStatusChange }: HabitListProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    unknown: true,
-    success: true,
-    failed: true,
-    skipped: true,
+    pending: true,
+    completed: true,
   });
 
-  const groupedHabits = habits.reduce<HabitGroups>(
-    (groups, habit) => {
-      groups[habit.status].push(habit);
-      return groups;
-    },
-    {
-      unknown: [],
-      success: [],
-      failed: [],
-      skipped: [],
-    }
-  );
+  // Group habits by done status
+  const pendingHabits = habits.filter(habit => !habit.done);
+  const completedHabits = habits.filter(habit => habit.done);
 
-  const toggleSection = (section: keyof HabitGroups) => {
+  const toggleSection = (section: 'pending' | 'completed') => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
   };
 
-  const renderSection = (title: string, habits: Habit[], status: keyof HabitGroups) => {
-    if (habits.length === 0) return null;
+  const renderSection = (title: string, habitsList: Habit[], section: 'pending' | 'completed') => {
+    if (habitsList.length === 0) return null;
 
     return (
       <div className="mb-6">
         <button
-          onClick={() => toggleSection(status)}
+          onClick={() => toggleSection(section)}
           className="flex items-center gap-2 mb-2 text-gray-700 hover:text-gray-900"
         >
           <svg
             className={`w-4 h-4 transition-transform ${
-              expandedSections[status] ? 'transform rotate-90' : ''
+              expandedSections[section] ? 'transform rotate-90' : ''
             }`}
             fill="none"
             viewBox="0 0 24 24"
@@ -66,13 +48,13 @@ export function HabitList({ habits, onStatusChange }: HabitListProps) {
             />
           </svg>
           <span className="font-medium">
-            {title} ({habits.length})
+            {title} ({habitsList.length})
           </span>
         </button>
 
-        {expandedSections[status] && (
+        {expandedSections[section] && (
           <div className="space-y-2">
-            {habits.map((habit) => (
+            {habitsList.map((habit) => (
               <HabitItem
                 key={habit.id}
                 habit={habit}
@@ -88,24 +70,10 @@ export function HabitList({ habits, onStatusChange }: HabitListProps) {
   return (
     <div>
       {/* Pending Habits */}
-      {groupedHabits.unknown.length > 0 && (
-        <div className="mb-8">
-          <div className="space-y-2">
-            {groupedHabits.unknown.map((habit) => (
-              <HabitItem
-                key={habit.id}
-                habit={habit}
-                onStatusChange={onStatusChange}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      {renderSection('Pending', pendingHabits, 'pending')}
 
-      {/* Completed Sections */}
-      {renderSection('Success', groupedHabits.success, 'success')}
-      {renderSection('Failed', groupedHabits.failed, 'failed')}
-      {renderSection('Skipped', groupedHabits.skipped, 'skipped')}
+      {/* Completed Habits */}
+      {renderSection('Completed', completedHabits, 'completed')}
 
       {/* Empty State */}
       {habits.length === 0 && (

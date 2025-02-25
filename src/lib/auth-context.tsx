@@ -27,14 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session found' : 'No session');
+      console.log('Initial session check:', session ? `Session found for user ${session.user.id}` : 'No session');
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     // Listen for changes on auth state (signed in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session ? 'Session exists' : 'No session');
+      console.log('Auth state changed:', _event, session ? `Session exists for user ${session.user.id}` : 'No session');
       setUser(session?.user ?? null);
       setLoading(false);
     });
