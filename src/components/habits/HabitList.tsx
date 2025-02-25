@@ -1,20 +1,24 @@
+"use client";
+
 import { useState } from 'react';
-import { HabitItem, type Habit } from './HabitItem';
+import { HabitItem } from './HabitItem';
+import { HabitWithCompletion } from '@/lib/types';
+import { groupHabitsByStatus } from '@/lib/habit-utils';
 
 interface HabitListProps {
-  habits: Habit[];
-  onStatusChange: (habit: Habit, done: boolean) => void;
+  habits: HabitWithCompletion[];
+  onStatusChange: (habitId: number, status: 'success' | 'failed' | 'skipped') => void;
+  onSelectHabit: (habit: HabitWithCompletion | null) => void;
 }
 
-export function HabitList({ habits, onStatusChange }: HabitListProps) {
+export function HabitList({ habits, onStatusChange, onSelectHabit }: HabitListProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     pending: true,
     completed: true,
   });
 
-  // Group habits by done status
-  const pendingHabits = habits.filter(habit => !habit.done);
-  const completedHabits = habits.filter(habit => habit.done);
+  // Group habits by status
+  const { pending, completed } = groupHabitsByStatus(habits);
 
   const toggleSection = (section: 'pending' | 'completed') => {
     setExpandedSections((prev) => ({
@@ -23,7 +27,11 @@ export function HabitList({ habits, onStatusChange }: HabitListProps) {
     }));
   };
 
-  const renderSection = (title: string, habitsList: Habit[], section: 'pending' | 'completed') => {
+  const handleHabitSelect = (habit: HabitWithCompletion) => {
+    onSelectHabit(habit);
+  };
+
+  const renderSection = (title: string, habitsList: HabitWithCompletion[], section: 'pending' | 'completed') => {
     if (habitsList.length === 0) return null;
 
     return (
@@ -59,6 +67,7 @@ export function HabitList({ habits, onStatusChange }: HabitListProps) {
                 key={habit.id}
                 habit={habit}
                 onStatusChange={onStatusChange}
+                onSelect={handleHabitSelect}
               />
             ))}
           </div>
@@ -70,10 +79,10 @@ export function HabitList({ habits, onStatusChange }: HabitListProps) {
   return (
     <div>
       {/* Pending Habits */}
-      {renderSection('Pending', pendingHabits, 'pending')}
+      {renderSection('Pending', pending, 'pending')}
 
       {/* Completed Habits */}
-      {renderSection('Completed', completedHabits, 'completed')}
+      {renderSection('Completed', completed, 'completed')}
 
       {/* Empty State */}
       {habits.length === 0 && (

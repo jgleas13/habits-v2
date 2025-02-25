@@ -1,18 +1,14 @@
+"use client";
+
 import { useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-
-export interface Habit {
-  id: number;
-  name: string;
-  done: boolean;
-  user_id: string;
-  created_at: string;
-}
+import { HabitWithCompletion, HabitStatus } from '@/lib/types';
 
 interface HabitItemProps {
-  habit: Habit;
-  onStatusChange: (habit: Habit, done: boolean) => void;
+  habit: HabitWithCompletion;
+  onStatusChange: (habitId: number, status: 'success' | 'failed' | 'skipped') => void;
+  onSelect: (habit: HabitWithCompletion) => void;
 }
 
 interface MenuItemProps {
@@ -32,25 +28,26 @@ const MenuItem = ({ active, children, onClick }: MenuItemProps) => (
   </button>
 );
 
-export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
+export function HabitItem({ habit, onStatusChange, onSelect }: HabitItemProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const getStatusStyles = () => {
-    return habit.done ? 'line-through text-gray-500' : 'text-gray-900';
+    switch (habit.status) {
+      case 'success':
+        return 'line-through text-green-500';
+      case 'failed':
+        return 'text-red-500';
+      case 'skipped':
+        return 'line-through text-gray-400';
+      default:
+        return 'text-gray-900';
+    }
   };
 
-  return (
-    <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:border-gray-200 transition-all">
-      {/* Quick Done Button */}
-      <button
-        onClick={() => onStatusChange(habit, !habit.done)}
-        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-          habit.done
-            ? 'bg-green-500 border-green-500'
-            : 'border-gray-300 hover:border-green-500'
-        }`}
-      >
-        {habit.done && (
+  const getStatusIcon = () => {
+    switch (habit.status) {
+      case 'success':
+        return (
           <svg
             className="w-4 h-4 text-white"
             fill="none"
@@ -64,7 +61,79 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
               d="M5 13l4 4L19 7"
             />
           </svg>
-        )}
+        );
+      case 'failed':
+        return (
+          <svg
+            className="w-4 h-4 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        );
+      case 'skipped':
+        return (
+          <svg
+            className="w-4 h-4 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 5l7 7-7 7M5 5l7 7-7 7"
+            />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getStatusButtonStyles = () => {
+    switch (habit.status) {
+      case 'success':
+        return 'bg-green-500 border-green-500';
+      case 'failed':
+        return 'bg-red-500 border-red-500';
+      case 'skipped':
+        return 'bg-gray-400 border-gray-400';
+      default:
+        return 'border-gray-300 hover:border-green-500';
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't select if clicking on the status button or menu
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    onSelect(habit);
+  };
+
+  return (
+    <div 
+      className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:border-gray-200 transition-all cursor-pointer"
+      onClick={handleClick}
+    >
+      {/* Quick Done Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onStatusChange(habit.id, habit.status === 'success' ? 'failed' : 'success');
+        }}
+        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${getStatusButtonStyles()}`}
+      >
+        {getStatusIcon()}
       </button>
 
       {/* Habit Name */}
@@ -72,11 +141,14 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
         {habit.name}
       </span>
 
-      {/* Status Menu - Simplified for done/not done */}
+      {/* Status Menu */}
       <Menu as="div" className="relative">
         <Menu.Button
           className="p-1 rounded-full hover:bg-gray-100"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsMenuOpen(!isMenuOpen);
+          }}
         >
           <svg
             className="w-6 h-6 text-gray-500"
@@ -106,15 +178,22 @@ export function HabitItem({ habit, onStatusChange }: HabitItemProps) {
             <div className="py-1">
               <Menu.Item>
                 {({ active }) => (
-                  <MenuItem active={active} onClick={() => onStatusChange(habit, true)}>
+                  <MenuItem active={active} onClick={() => onStatusChange(habit.id, 'success')}>
                     ✓ Mark as Done
                   </MenuItem>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <MenuItem active={active} onClick={() => onStatusChange(habit, false)}>
-                    ✕ Mark as Not Done
+                  <MenuItem active={active} onClick={() => onStatusChange(habit.id, 'failed')}>
+                    ✕ Mark as Failed
+                  </MenuItem>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <MenuItem active={active} onClick={() => onStatusChange(habit.id, 'skipped')}>
+                    ↷ Mark as Skipped
                   </MenuItem>
                 )}
               </Menu.Item>

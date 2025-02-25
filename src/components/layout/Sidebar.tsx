@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -52,7 +54,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 p-4 flex flex-col">
+    <div className="h-full p-4 flex flex-col">
       {/* User Profile */}
       <div className="flex items-center space-x-3 mb-8">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
